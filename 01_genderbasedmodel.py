@@ -13,7 +13,7 @@ import numpy as np
 
 # Open up the csv file in to a Python object
 #csv_file_object = csv.reader(open('../csv/train.csv', 'rb')) 
-csv_file_object = csv.reader(open('C:/Users/c125946/Desktop/Python/data/train.csv', 'rb')) 
+csv_file_object = csv.reader(open('C:/Users/c125946/Desktop/Training/data/train.csv', 'rb')) 
 
 header = csv_file_object.next()  # The next() command just skips the 
                                  # first line which is a header
@@ -60,10 +60,10 @@ print 'Proportion of men who survived is %s' % proportion_men_survived
 
 
 ### Reading the test data and writing the gender model as a csv
-test_file = open('C:/Users/c125946/Desktop/Python/data/test.csv', 'rb')
+test_file = open('C:/Users/c125946/Desktop/Training/data/test.csv', 'rb')
 test_file_object = csv.reader(test_file)
 header = test_file_object.next()
-prediction_file = open("C:/Users/c125946/Desktop/Python/data/genderbasedmodel.csv", "wb")
+prediction_file = open("C:/Users/c125946/Desktop/Training/data/genderbasedmodel.csv", "wb")
 prediction_file_object = csv.writer(prediction_file)
 prediction_file_object.writerow(["PassengerId", "Survived"])
 for row in test_file_object:       # For each row in test.csv
