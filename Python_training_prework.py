@@ -1,99 +1,102 @@
-# MODEL 2: Compute per combination of categories the average of target variable 
+# Working with Lists
+shopping_list = [ 'eggs', 'milk', 'cheese', 'celery', 'peanut butter', 'baking soda' ]
+print(shopping_list)
+print(shopping_list[2])
+shopping_list[3] = 'lettuce'
+shopping_list.append('chocolate bar')
 
-# The first thing to do is to import the relevant packages
-# that I will need for my script, 
-# these include the Numpy (for maths and arrays)
-# and csv for reading and writing csv files
-# If i want to use something from this I need to call 
-# csv.[function] or np.[function] first
-
-import csv as csv 
+# If then else...
+age = 13
+if age == 12:
+    print('Hello')
+elif age == 13:
+    print('you are 13')
+else:
+    print('Goodbye')
+    
+    
+# Import CSV File (Training File for Titanic Competition) as a dataframe (using Pandas)
+import pandas as pd
 import numpy as np
+titanic = pd.read_csv('C:/Users/c125946/Desktop/Training/data/train.csv') 
+titanic.describe()
+# Some variables are strings
 
-# Open up the csv file in to a Python object
-#csv_file_object = csv.reader(open('../csv/train.csv', 'rb')) 
-csv_file_object = csv.reader(open('C:/Users/c125946/Desktop/Training/data/train.csv', 'rb')) 
+# Percentage of survived passengers
+titanic["Survived"].mean()
 
-header = csv_file_object.next()  # The next() command just skips the 
-                                 # first line which is a header
-data=[]                          # Create a variable called 'data'.
-for row in csv_file_object:      # Run through each row in the csv file,
-    data.append(row)             # adding each row to the data variable
-data = np.array(data) 	          # Then convert from a list to an array
-        			          # Be aware that each item is currently
-                                 # a string in this format
 
-# ticket price into the four bins 
-# So we add a ceiling
-fare_ceiling = 40
-# then modify the data in the Fare column to = 39, if it is greater or equal to the ceiling
-data[ data[0::,9].astype(np.float) >= fare_ceiling, 9 ] = fare_ceiling - 1.0
+# Exploring data
+# Age distribution
+import matplotlib as plt
+import matplotlib.pyplot
+fig = plt.pyplot.figure()
+ax = fig.add_subplot(111)
+ax.hist(titanic['Age'], bins = 10, range = (titanic['Age'].min(),titanic['Age'].max()))
+plt.pyplot.title('Age distribution')
+plt.pyplot.xlabel('Age')
+plt.pyplot.ylabel('Count of Passengers')
+plt.pyplot.show()
 
-fare_bracket_size = 10
-number_of_price_brackets = fare_ceiling / fare_bracket_size
 
-# I know there were 1st, 2nd and 3rd classes on board
-number_of_classes = 3
+# Fare distribution
+fig = plt.pyplot.figure()
+ax = fig.add_subplot(111)
+ax.hist(titanic['Fare'], bins = 10, range = (titanic['Fare'].min(),titanic['Fare'].max()))
+plt.pyplot.title('Fare distribution')
+plt.pyplot.xlabel('Fare')
+plt.pyplot.ylabel('Count of Passengers')
+plt.pyplot.show()
 
-# But it's better practice to calculate this from the data directly
-# Take the length of an array of unique values in column index 2
-number_of_classes = len(np.unique(data[0::,2])) 
+# Correlation between Pclass and Fare
+titanic.boxplot(column='Fare', by = 'Pclass')
 
-# Initialize the survival table with all zeros
-survival_table = np.zeros((2, number_of_classes, number_of_price_brackets))
+# Probability of surviving per class
+temp1 = titanic.groupby('Pclass').Survived.count()
+temp2 = titanic.groupby('Pclass').Survived.sum()/titanic.groupby('Pclass').Survived.count()
+fig = plt.pyplot.figure(figsize=(8,4))
+ax1 = fig.add_subplot(121)
+ax1.set_xlabel('Pclass')
+ax1.set_ylabel('Count of Passengers')
+ax1.set_title("Passengers by Pclass")
+temp1.plot(kind='bar')
 
-for i in xrange(number_of_classes):       #loop through each class
-  for j in xrange(number_of_price_brackets):   #loop through each price bin
-      women_only_stats = data[(data[0::,4] == "female")&(data[0::,2].astype(np.float) == i+1)&(data[0:,9].astype(np.float) >= j*fare_bracket_size) &(data[0:,9].astype(np.float) < (j+1)*fare_bracket_size) , 1] 
-      men_only_stats   = data[(data[0::,4] != "female")&(data[0::,2].astype(np.float) == i+1)&(data[0:,9].astype(np.float) >= j*fare_bracket_size)&(data[0:,9].astype(np.float) < (j+1)*fare_bracket_size), 1] 
-      survival_table[0,i,j] = np.mean(women_only_stats.astype(np.float)) 
-      survival_table[1,i,j] = np.mean(men_only_stats.astype(np.float))
-     
-# Missings due to division of 0     
-survival_table[ survival_table != survival_table ] = 0.   
+ax2 = fig.add_subplot(122)
+temp2.plot(kind = 'bar')
+ax2.set_xlabel('Pclass')
+ax2.set_ylabel('Probability of Survival')
+ax2.set_title("Probability of survival by class")
+# Probability decreases with lower class (1st class > 60 %, 3rd class < 25 %)
 
-# Predict survive if average ge 0.5
-survival_table[ survival_table < 0.5 ] = 0
-survival_table[ survival_table >= 0.5 ] = 1 
+# Correlation between Class, Sex, Survived
+temp3 = pd.crosstab([titanic.Pclass, titanic.Sex], titanic.Survived.astype(bool))
+temp3.plot(kind='bar', stacked=True, color=['red','blue'], grid=False)
 
-# Scoring on Test File
-test_file = open('C:/Users/c125946/Desktop/Training/data/test.csv', 'rb')
-test_file_object = csv.reader(test_file)
-header = test_file_object.next()
-predictions_file = open("C:/Users/c125946/Desktop/Training/data/genderclassmodel.csv", "wb")
-p = csv.writer(predictions_file)
-p.writerow(["PassengerId", "Survived"])
+# Correlation between Class, Sex, Embarkment, Survived
+temp3 = pd.crosstab([titanic.Pclass, titanic.Sex, titanic.Embarked], titanic.Survived.astype(bool))
+temp3.plot(kind='bar', stacked=True, color=['red','blue'], grid=False)
 
-for row in test_file_object:                 # We are going to loop
-                                              # through each passenger
-                                              # in the test set                     
-  for j in xrange(number_of_price_brackets):  # For each passenger we
-                                              # loop thro each price bin
-    try:                                      # Some passengers have no
-                                              # Fare data so try to make
-      row[8] = float(row[8])                  # a float
-    except:                                   # If fails: no data, so 
-      bin_fare = 3 - float(row[1])            # bin the fare according Pclass
-      break                                   # Break from the loop
-    if row[8] > fare_ceiling:              # If there is data see if
-                                              # it is greater than fare
-                                              # ceiling we set earlier
-      bin_fare = number_of_price_brackets-1   # If so set to highest bin
-      break                                   # And then break loop
-    if row[8] >= j * fare_bracket_size\
-       and row[8] < \
-       (j+1) * fare_bracket_size:             # If passed these tests 
-                                              # then loop through each bin 
-      bin_fare = j                            # then assign index
-      break                                   
 
-    if row[3] == 'female':                             #If the passenger is female
-        p.writerow([row[0], "%d" % \
-                   int(survival_table[0, float(row[1])-1, bin_fare])])
-    else:                                          #else if male
-        p.writerow([row[0], "%d" % \
-                   int(survival_table[1, float(row[1])-1, bin_fare])])
-     
-# Close out the files.
-test_file.close() 
-predictions_file.close()
+
+# Data preparation
+# How to handle missing values: Fill with median of age
+titanic["Age"] = titanic["Age"].fillna(titanic["Age"].median())
+
+# converting sex attribute to a numeric attribute
+titanic.loc[titanic["Sex"] == "male", "Sex"] = 0
+titanic.loc[titanic["Sex"]=="female","Sex"]=1
+
+# Find all the unique values for "Embarked".
+print(titanic["Embarked"].unique())
+
+# Fill missings with most common value
+titanic["Embarked"].value_counts()
+# S    644
+# C    168
+# Q     77
+titanic["Embarked"] = titanic["Embarked"].fillna("S")
+
+# converting Embarked attribute to a numeric attribute
+titanic.loc[titanic["Embarked"] == "S", "Embarked"] =0
+titanic.loc[titanic["Embarked"] == "C", "Embarked"] = 1
+titanic.loc[titanic["Embarked"] == "Q", "Embarked"] = 2
